@@ -28,3 +28,7 @@ Instructions, scripts and to set up Pop!Os 22.04 LTS installations.
    ```shell
    echo 'export PATH="/home/fabian/.local/bin:$PATH"' >> ~/.bashrc
    ```
+5. Enable extended keyboard layouts
+   ```shell
+   gsettings set org.gnome.desktop.input-sources show-all-sources true
+   ```
