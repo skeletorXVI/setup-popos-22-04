@@ -32,3 +32,4 @@ Instructions, scripts and to set up Pop!Os 22.04 LTS installations.
    ```shell
    gsettings set org.gnome.desktop.input-sources show-all-sources true
    ```
+6. Select the `English (US)` > `German, Swedish and Finnish (US)`
