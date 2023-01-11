@@ -277,6 +277,20 @@
         deb: /tmp/sops_amd64.deb
         state: present
 
+- name: Install password manager
+  become: yes
+  hosts: all
+  tasks:
+    - name: Install KeepassXC package
+      ansible.builtin.apt:
+        package:
+          - keepassxc
+        state: present
+    - name: Install Bitwarden flatpak
+      community.general.flatpak:
+        name: com.bitwarden.desktop
+        state: present
+
 - name: Start PackageKit
   become: yes
   hosts: all
