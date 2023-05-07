@@ -1,164 +1,65 @@
 - name: Get architecture
   hosts: all
-  become: yes
+  become: true
   tasks:
     - name: Get architecture
       ansible.builtin.command:
         cmd: dpkg --print-architecture
       register: dpkg_architecture
     - name: Set variable
-      set_fact:
+      ansible.builtin.set_fact:
         arch: "{{ dpkg_architecture.stdout }}"
 
 - name: Stop PackageKit
-  become: yes
+  become: true
   hosts: all
   tasks:
-    - systemd:
+    - name: Stop packagekit service to avoid issues during installation
+      ansible.builtin.systemd:
         name: packagekit
         state: stopped
 
-- name: Configure flatpak
-  become: yes
+- name: Manage app repositories
+  become: true
   hosts: all
-  tasks:
+  pre_tasks:
     - name: Add default flathub
       community.general.flatpak_remote:
         name: flathub
         flatpakrepo_url: https://flathub.org/repo/flathub.flatpakrepo
         state: present
-
-- name: Install Python
-  become: yes
-  hosts: all
-  tasks:
     - name: Add deadsnakes PPA
       ansible.builtin.apt_repository:
         repo: ppa:deadsnakes/ppa
         state: present
-    - name: Install pipenv
-      ansible.builtin.pip:
-        name:
-          - pipenv
-          - pre-commit
+    - name: Add Remmina PPA
+      ansible.builtin.apt_repository:
+        repo: ppa:remmina-ppa-team/remmina-next
         state: present
-    - name: Install Python package
-      ansible.builtin.apt:
-        package:
-          - python3.9
-          - python3.9-dev
-          - python3.9-venv
-          - python3.9-distutils
-        state: present
-
-- name: Add nodesource PPA
-  hosts: all
   roles:
-    - role: add-ppa
-      vars:
-        key_name: nodesource
-        key_url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
-        repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_facts.distribution_release }} main"
-
-- name: Install and configure node
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install nodejs
-      ansible.builtin.apt:
-        package: nodejs
-        state: present
-    - name: Enable corepack
-      ansible.builtin.command:
-        cmd: corepack enable
-
-- name: Add docker PPA
-  hosts: all
-  roles:
-    - role: add-ppa
+    - name: Add docker PPA
+      role: add-ppa
       vars:
         key_name: docker
         key_url: https://download.docker.com/linux/ubuntu/gpg
         repo: "deb [arch={{ arch }}] https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable"
-
-- name: Install Docker
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install docker packages
-      ansible.builtin.apt:
-        package:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-compose-plugin
-        state: present
-    - name: Add current user to docker group
-      ansible.builtin.user:
-        name: "{{ ansible_facts.env.SUDO_USER }}"
-        append: yes
-        groups:
-          - docker
-        state: present
-
-- name: Add Kubernetes PPA`s
-  hosts: all
-  roles:
+    - name: Add Node 16 PPA
+      role: add-ppa
+      vars:
+        key_name: nodesource
+        key_url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_facts.distribution_release }} main"
     - name: Helm PPA
       role: add-ppa
       vars:
         key_name: helm
         key_url: https://baltocdn.com/helm/signing.asc
         repo: "deb [arch={{ arch }}] https://baltocdn.com/helm/stable/debian/ all main"
-
-- name: Install Kubernetes tooling
-  hosts: all
-  become: yes
-  tasks:
-    - name: Download signing key
-      become: yes
-      ansible.builtin.get_url:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        dest: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-    - name: Add Google Cloud PPA
-      become: yes
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
-        state: present
-    - name: Install kubernetes packages
-      ansible.builtin.apt:
-        package:
-          - kubectl
-          - helm
-        state: present
-
-- name: Add MongoDB PPA
-  hosts: all
-  roles:
     - role: add-ppa
       vars:
         key_name: mongodb-server
         key_url: https://www.mongodb.org/static/pgp/server-5.0.asc
         repo: "deb [arch={{ arch }}] https://repo.mongodb.org/apt/ubuntu {{ ansible_facts.distribution_release }}/mongodb-org/5.0 multiverse"
-
-- name: Add MongoDB tooling
-  hosts: all
-  become: yes
-  tasks:
-    - name: Install MongoDB CLI tools
-      ansible.builtin.apt:
-        package:
-          - mongodb-database-tools
-          - mongocli
-        state: present
-    - name: Install MongoDB Compass
-      ansible.builtin.apt:
-        deb: https://downloads.mongodb.com/compass/mongodb-compass_1.34.2_amd64.deb
-        state: present
-
-- name: Add Microsoft PPA
-  hosts: all
-  roles:
     - role: add-ppa
       vars:
         key_name: microsoft
@@ -169,132 +70,124 @@
         key_name: microsoft
         key_url: https://packages.microsoft.com/keys/microsoft.asc
         repo: "deb [arch={{ arch }}] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_facts.distribution_release }} main"
-
-- name: Install Microsoft apps
-  hosts: all
-  become: yes
-  tasks:
-    - name: Install Microsoft packages
-      ansible.builtin.apt:
-        package:
-          - code
-          - azure-cli
-        state: present
-    - name: Install Teams flatpak
-      community.general.flatpak:
-        name: com.microsoft.Teams
-        state: present
-
-- name: Install Zoom
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install Zoom flatpak
-      community.general.flatpak:
-        name: us.zoom.Zoom
-        state: present
-
-- name: Install Postman
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install Postman flatpak
-      community.general.flatpak:
-        name: com.getpostman.Postman
-        state: present
-
-- name: Install VPN
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install VPN packages
-      ansible.builtin.apt:
-        package:
-          - network-manager-openconnect
-          - network-manager-openconnect-gnome
-          - wireguard-tools
-
-- name: Add Terraform PPA
-  hosts: all
-  roles:
     - role: add-ppa
       vars:
         key_name: terraform
         key_url: https://apt.releases.hashicorp.com/gpg
         repo: "deb [arch={{ arch }}] https://apt.releases.hashicorp.com {{ ansible_facts.distribution_release }} main"
+    - role: add-ppa
+      vars:
+        key_name: google-cloud
+        key_url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        key_type: gpg
+        repo_name: kubernetes
+        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+    - role: add-ppa
+      vars:
+        key_name: owncloud
+        key_url: https://download.owncloud.com/desktop/ownCloud/stable/latest/linux/Ubuntu_22.04/Release.key
+        repo: "deb https://download.owncloud.com/desktop/ownCloud/stable/latest/linux/Ubuntu_22.04/ /"
 
-- name: Install terraform
+- name: Install packages
+  become: true
   hosts: all
-  become: yes
+  vars:
+    sops_version: 3.7.3
   tasks:
-    - name: Install Terraform package
+    - name: Install pip packages
+      ansible.builtin.pip:
+        name:
+          - pipenv
+          - pre-commit
+        state: present
+    - name: Install apt packages
       ansible.builtin.apt:
+        update_cache: true
         package:
+          # Node
+          - nodejs
+          # Docker
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+          # MongoDB
+          - mongodb-database-tools
+          - mongocli
+          # Microsoft
+          - code
+          - azure-cli
+          # VPN
+          - wireguard-tools
+          # Terraform
           - terraform
-        state: present
-
-- name: Install Remmina remote desktop client
-  become: yes
-  hosts: all
-  tasks:
-    - name: Add Remmina PPA
-      ansible.builtin.apt_repository:
-        repo: ppa:remmina-ppa-team/remmina-next
-        state: present
-    - name: Install Remmina packages
-      ansible.builtin.apt:
-        package:
+          # Remote Desktop
           - remmina
           - remmina-plugin-rdp
           - remmina-plugin-secret
+          # Kubernetes
+          - kubectl
+          - helm
+          # Cloud drive
+          - owncloud-client
         state: present
-
-- name: Install Google Chrome
-  become: yes
-  hosts: all
-  tasks:
-    - name: Download package
-      ansible.builtin.get_url:
-        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        dest: /tmp/google-chrome-stable_current_amd64.deb
     - name: Install Chrome
       ansible.builtin.apt:
-        deb: /tmp/google-chrome-stable_current_amd64.deb
+        deb: https://github.com/mozilla/sops/releases/download/v{{ sops_version }}/sops_{{ sops_version }}_amd64.deb
         state: present
-
-- name: Install Mozilla SOPS
-  become: yes
-  hosts: all
-  vars:
-    version: 3.7.3
-  tasks:
-    - name: Download package
-      ansible.builtin.get_url:
-        url: "https://github.com/mozilla/sops/releases/download/v{{ version }}/sops_{{ version }}_amd64.deb"
-        dest: /tmp/sops_amd64.deb
-    - name: Install Chrome
+    - name: Install MongoDB Compass
       ansible.builtin.apt:
-        deb: /tmp/sops_amd64.deb
+        deb: https://downloads.mongodb.com/compass/mongodb-compass_1.34.2_amd64.deb
         state: present
-
-- name: Install password manager
-  become: yes
-  hosts: all
-  tasks:
-    - name: Install KeepassXC package
-      ansible.builtin.apt:
-        package:
-          - keepassxc
-        state: present
-    - name: Install Bitwarden flatpak
+    - name: Install Zoom flatpak
       community.general.flatpak:
-        name: com.bitwarden.desktop
+        name:
+          # Postman
+          - com.getpostman.Postman
+          # Browser
+          - com.google.Chrome
+          # Communication
+          - com.discordapp.Discord
+          - us.zoom.Zoom
+          # Password Management
+          - com.bitwarden.desktop
         state: present
+
+- name: Configuration
+  hosts: all
+  tasks:
+    - name: Add current user to docker group
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        append: true
+        groups:
+          - docker
+        state: present
+    - name: Install VSCode plugins
+      ansible.builtin.command:
+        argv:
+          - /usr/bin/code
+          - --user-data-dir
+          - "{{ ansible_env.HOME }}/.config/Code"
+          - --force
+          - --install-extension
+          - signageos.signageos-vscode-sops
+          - --install-extension
+          - redhat.ansible
+          - --install-extension
+          - HashiCorp.terraform
+          - --install-extension
+          - GitHub.vscode-github-actions
+    - name: Enable corepack for node package management
+      ansible.builtin.command:
+        cmd: corepack enable
 
 - name: Start PackageKit
-  become: yes
+  become: true
   hosts: all
   tasks:
-    - systemd:
+    - name: Start packagekit to restore functionality
+      ansible.builtin.systemd:
         name: packagekit
         state: started

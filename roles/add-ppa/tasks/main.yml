@@ -1,18 +1,13 @@
-- name: "Check mandatory variables are defined"
-  assert:
-    that:
-      - key_url is defined
-      - key_name is defined
-      - repo is defined
-
 - name: Download signing key
-  become: yes
+  become: true
   ansible.builtin.get_url:
     url: "{{ key_url }}"
-    dest: "/etc/apt/trusted.gpg.d/{{ key_name }}.asc"
+    dest: "/etc/apt/trusted.gpg.d/{{ key_name }}.{{ key_type }}"
+    mode: "644"
 
 - name: Add PPA
-  become: yes
+  become: true
   ansible.builtin.apt_repository:
     repo: "{{ repo }}"
     state: present
+    update_cache: false

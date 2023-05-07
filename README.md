@@ -33,3 +33,19 @@ Instructions, scripts and to set up Pop!Os 22.04 LTS installations.
    gsettings set org.gnome.desktop.input-sources show-all-sources true
    ```
 6. Select the `English (US)` > `German, Swedish and Finnish (US)`
+
+## Troubleshooting
+
+### Stuck on "Gathering Facts"
+
+This issue may happen when alternative PAM authentication methods are installed.
+The best workaround for this issue is to use SSH connection instead of local connection.
+
+Use the following command instead.
+
+```shell
+ansible-playbook \
+  --inventory ~/Repositories/popos22-04_setup/inventory \
+  --ask-become-pass \
+  ~/Repositories/popos22-04_setup/setup.yml
+```
