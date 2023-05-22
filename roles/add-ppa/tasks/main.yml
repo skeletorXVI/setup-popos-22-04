@@ -8,6 +8,7 @@
 - name: Add PPA
   become: true
   ansible.builtin.apt_repository:
+    filename: "{{ key_name }}"
     repo: "{{ repo }}"
     state: present
     update_cache: false

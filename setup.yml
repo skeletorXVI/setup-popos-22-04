@@ -42,50 +42,53 @@
       vars:
         key_name: docker
         key_url: https://download.docker.com/linux/ubuntu/gpg
+        key_type: asc
         repo: "deb [arch={{ arch }}] https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable"
     - name: Add Node 16 PPA
       role: add-ppa
       vars:
         key_name: nodesource
         key_url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        key_type: asc
         repo: "deb https://deb.nodesource.com/node_16.x {{ ansible_facts.distribution_release }} main"
     - name: Helm PPA
       role: add-ppa
       vars:
         key_name: helm
         key_url: https://baltocdn.com/helm/signing.asc
+        key_type: asc
         repo: "deb [arch={{ arch }}] https://baltocdn.com/helm/stable/debian/ all main"
     - role: add-ppa
       vars:
         key_name: mongodb-server
         key_url: https://www.mongodb.org/static/pgp/server-5.0.asc
+        key_type: asc
         repo: "deb [arch={{ arch }}] https://repo.mongodb.org/apt/ubuntu {{ ansible_facts.distribution_release }}/mongodb-org/5.0 multiverse"
     - role: add-ppa
       vars:
         key_name: microsoft
         key_url: https://packages.microsoft.com/keys/microsoft.asc
-        repo: "deb [arch={{ arch }}] https://packages.microsoft.com/repos/vscode stable main"
+        key_type: asc
+        repo: |
+          deb [arch={{ arch }}] https://packages.microsoft.com/repos/vscode stable main
+          deb [arch={{ arch }}] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_facts.distribution_release }} main
     - role: add-ppa
       vars:
-        key_name: microsoft
-        key_url: https://packages.microsoft.com/keys/microsoft.asc
-        repo: "deb [arch={{ arch }}] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_facts.distribution_release }} main"
-    - role: add-ppa
-      vars:
-        key_name: terraform
+        key_name: hashicorp
         key_url: https://apt.releases.hashicorp.com/gpg
+        key_type: asc
         repo: "deb [arch={{ arch }}] https://apt.releases.hashicorp.com {{ ansible_facts.distribution_release }} main"
     - role: add-ppa
       vars:
         key_name: google-cloud
         key_url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        key_type: gpg
-        repo_name: kubernetes
+        key_type: asc
         repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
     - role: add-ppa
       vars:
         key_name: owncloud
         key_url: https://download.owncloud.com/desktop/ownCloud/stable/latest/linux/Ubuntu_22.04/Release.key
+        key_type: asc
         repo: "deb https://download.owncloud.com/desktop/ownCloud/stable/latest/linux/Ubuntu_22.04/ /"
 
 - name: Install packages
@@ -130,6 +133,8 @@
           - helm
           # Cloud drive
           - owncloud-client
+          # Secrets
+          - vault
         state: present
     - name: Install Chrome
       ansible.builtin.apt:
