@@ -65,9 +65,13 @@
         key_name: microsoft
         key_url: https://packages.microsoft.com/keys/microsoft.asc
         key_type: asc
-        repo: |
-          deb [arch={{ arch }}] https://packages.microsoft.com/repos/vscode stable main
-          deb [arch={{ arch }}] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_facts.distribution_release }} main
+        repo: "deb [arch={{ arch }}] https://packages.microsoft.com/repos/vscode stable main"
+    - role: add-ppa
+      vars:
+        key_name: microsoft
+        key_url: https://packages.microsoft.com/keys/microsoft.asc
+        key_type: asc
+        repo: "deb [arch={{ arch }}] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_facts.distribution_release }} main"
     - role: add-ppa
       vars:
         key_name: hashicorp
@@ -190,6 +194,7 @@
           - --install-extension
           - GitHub.vscode-github-actions
     - name: Enable corepack for node package management
+      become: true
       ansible.builtin.command:
         cmd: corepack enable
 
