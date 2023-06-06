@@ -108,6 +108,8 @@
         name:
           - pipenv
           - pre-commit
+          - ansible
+          - ansible-lint
         state: present
     - name: Install apt packages
       ansible.builtin.apt:
