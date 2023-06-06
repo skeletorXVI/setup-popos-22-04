@@ -193,6 +193,22 @@
           - HashiCorp.terraform
           - --install-extension
           - GitHub.vscode-github-actions
+          - --install-extension
+          - HashiCorp.HCL
+          - --install-extension
+          - samuelcolvin.jinjahtml
+          - --install-extension
+          - mhutchie.git-graph
+          - --install-extension
+          - donjayamanne.githistory
+          - --install-extension
+          - GitHub.github-vscode-theme
+          - --install-extension
+          - eamodio.gitlens
+          - --install-extension
+          - redhat.vscode-yaml
+          - --install-extension
+          - ms-azuretools.vscode-docker
     - name: Enable corepack for node package management
       become: true
       ansible.builtin.command:
